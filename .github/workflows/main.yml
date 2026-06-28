@@ -1,4 +1,4 @@
-name: 定时增量同步外部仓库(不删除本地文件)
+name: 定时增量同步外部仓库(不清空目标目录)
 on:
   schedule:
     - cron: "*/30 * * * *"
@@ -26,12 +26,12 @@ jobs:
           git lfs track "*.apk" "*.zip" "*.7z" "*.rar"
           git add .gitattributes || true
 
-      - name: 配置环境变量（自行修改）
+      - name: 配置环境变量
         run: |
           # 外部源仓库地址
           echo "SOURCE_REPO=https://github.com/youhunwl/TVAPP.git" >> $GITHUB_ENV
           # 当前仓库存放同步文件的目录
-          echo "TVAPP" >> $GITHUB_ENV
+          echo "TARGET_FOLDER=TVAPP" >> $GITHUB_ENV
           # 同步分支
           echo "BRANCH=main" >> $GITHUB_ENV
           # 临时克隆目录
@@ -42,11 +42,9 @@ jobs:
           rm -rf ${{ env.TEMP_DIR }}
           git clone --depth 1 -b ${{ env.BRANCH }} ${{ env.SOURCE_REPO }} ${{ env.TEMP_DIR }}
 
-      - name: 增量同步文件（不清空目标目录，只覆盖同名文件）
+      - name: 增量同步文件（不清空目标目录，仅覆盖同名更新文件）
         run: |
           mkdir -p ${{ env.TARGET_FOLDER }}
-          # rsync 说明：
-          # -av 保留权限/目录结构；不加--delete，不会删除目标独有文件
           rsync -av ${{ env.TEMP_DIR }}/ ${{ env.TARGET_FOLDER }}/
           rm -rf ${{ env.TEMP_DIR }}
 
